@@ -127,7 +127,7 @@ def fetchSites(token):
 
 def login_vpn():
     try:
-        windscribe.login('TesterAccountPunk', 'tester-123account')
+        windscribe.login('cubicsolutioninc2019', 'Cubic2@19')
         return True
     except Exception as e:
         print(e)
@@ -136,7 +136,8 @@ def login_vpn():
 
 def connect_vpn():
     countries = ["us", "hk", "ca", "gb", "de", "ch"]
-    country = random.choice(countries)
+    # country = random.choice(countries)
+    country = "KR"
     result = os.popen('windscribe connect ' + country).read()
     arr = result.split(' ')
     ip = arr[-1]
