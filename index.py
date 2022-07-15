@@ -135,9 +135,8 @@ def login_vpn():
 
 
 def connect_vpn():
-    countries = ["us", "hk", "ca", "gb", "de", "ch"]
-    # country = random.choice(countries)
-    country = "KR"
+    countries = ["kr", "cn", "jp"]
+    country = random.choice(countries)
     result = os.popen('windscribe connect ' + country).read()
     arr = result.split(' ')
     ip = arr[-1]
