@@ -305,6 +305,7 @@ def start(sites):
                 site_tag_id, algorithm, s_start, s_end, page_limit, algorithm)
             print('INFO:\n URL: ', url_handler, '\n Site Name: ', site_name,
             '\n Site Tag ID: ', site_tag_id, '\n Tag Name: \n')
+            time.sleep(30)
 
 
     print('Re-run ----->\n============================\n')
