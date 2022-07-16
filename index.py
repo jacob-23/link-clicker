@@ -1,3 +1,4 @@
+from hashlib import algorithms_available
 import json
 import requests
 import time
@@ -101,28 +102,28 @@ def fetchSites(token):
         fetchSites(token)
 
 
-# def fetchSettings():
-#     headers['Authorization'] = "Bearer " + token
+def fetchCountries():
+    headers['Authorization'] = "Bearer " + token
 
-#     # Fetch datas and display
-#     try:
-#         response = requests.get(base_url + "/settings?filter_by=status&q=enabled", headers=headers)
-#         if response.status_code == 200:
-#             sites = json.loads(response.text)['list']
-#             for site in sites:
-#                 id = site['id']
-#                 country = site['country']
-#                 cca2 = site['cca2']
-#                 created_at = site['created_at']
-#             return cca2
+    # Fetch datas and display
+    try:
+        response = requests.get(base_url + "/countries?filter_by=status&q=enabled", headers=headers)
+        if response.status_code == 200:
+            return json.loads(response.text)['list']
+            # for country in countries:
+            #     id = country['id']
+            #     country = site['country']
+            #     cca2 = site['cca2']
+            #     created_at = site['created_at']
+            # return cca2
 
-#         print('Failed to fetch settings')
-#         time.sleep(3)
-#         fetchSettings()
-#     except:
-#         print('Something went wrong')
-#         time.sleep(3)
-#         fetchSettings()
+        print('Failed to fetch settings')
+        time.sleep(3)
+        fetchCountries()
+    except:
+        print('Something went wrong')
+        time.sleep(3)
+        fetchCountries()
 
 
 def login_vpn():
@@ -289,12 +290,20 @@ def start(sites):
     for tag_name in tag_names:
         tag_id = tag_name['id']
         site_tag_id = tag_name['site_tag_id']
-        keyword_name = tag_name['name']
-        print('INFO:\n URL: ', url_handler, '\n Site Name: ', site_name,
-              '\n Site Tag ID: ', site_tag_id, '\n Tag Name: ', keyword_name, '\n')
 
-        bootstrap(url_handler.replace("https://www.",""), 
-                site_tag_id, keyword_name, s_start, s_end, page_limit)
+        algorithms = [
+        tag_name['name'],
+        site_name,
+        tag_name['name'] + ' ' + site_name,
+        site_name + ' ' + tag_name['name'],
+        ]
+
+        for algorithm in algorithms:
+        
+            bootstrap(url_handler.replace("https://www.",""), 
+                site_tag_id, algorithm, s_start, s_end, page_limit)
+            print('INFO:\n URL: ', url_handler, '\n Site Name: ', site_name,
+            '\n Site Tag ID: ', site_tag_id, '\n Tag Name: \n')
 
 
     print('Re-run ----->\n============================\n')
