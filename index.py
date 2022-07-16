@@ -295,8 +295,6 @@ def start(sites):
         site_tag_id = tag_name['site_tag_id']
 
         algorithms = [
-        tag_name['name'],
-        site_name,
         tag_name['name'] + ' ' + site_name,
         site_name + ' ' + tag_name['name'],
         ]
