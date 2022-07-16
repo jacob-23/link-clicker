@@ -1,3 +1,4 @@
+from encodings import search_function
 from hashlib import algorithms_available
 import json
 import requests
@@ -66,6 +67,8 @@ headers = {
 
 
 current_ip = ''
+searchTerm = ''
+
 
 def login():
     try:
@@ -145,7 +148,7 @@ def connect_vpn():
     return ip
 
 
-def sendLog(isUpdate = False, site_tag_id = None, status = None, page = None, s_startedAt = None, s_endedAT = None, ip = ''):
+def sendLog(isUpdate = False, site_tag_id = None, status = None, page = None, s_startedAt = None, s_endedAT = None, ip = '', searchTerm = None):
 
     if isUpdate:
         payload = {'site_tag_id': site_tag_id, 'status': status, 'page': page, 'finished_at': s_endedAT}
@@ -155,7 +158,7 @@ def sendLog(isUpdate = False, site_tag_id = None, status = None, page = None, s_
         print('Succesfully Updated!', send_log)
         return
 
-    payload = {'site_tag_id': site_tag_id, 'ip': ip, 'started_at': s_startedAt}
+    payload = {'site_tag_id': site_tag_id, 'ip': ip, 'term': searchTerm, 'started_at': s_startedAt}
     send_log = requests.post(base_url + "/logs", headers=headers, json=payload)
 
     print('Succesfully Saved!', send_log)
@@ -238,12 +241,12 @@ def nextPage(start, end):
         return False
 
 
-def bootstrap(site, site_tag_id, _term, startTime, endTime, p_limit):
+def bootstrap(site, site_tag_id, _term, startTime, endTime, p_limit, algorithm = None):
     term = _term.lower().strip()
 
     started_at = generateDateTime()
     current_ip = connect_vpn()
-    print(sendLog(isUpdate=False, site_tag_id=site_tag_id, s_startedAt=started_at, ip=current_ip))
+    print(sendLog(isUpdate=False, site_tag_id=site_tag_id, s_startedAt=started_at, ip=current_ip, searchTerm=algorithm))
     ended_at = started_at
     searchInBrowser(term, started_at)
 
@@ -299,9 +302,9 @@ def start(sites):
         ]
 
         for algorithm in algorithms:
-        
+            
             bootstrap(url_handler.replace("https://www.",""), 
-                site_tag_id, algorithm, s_start, s_end, page_limit)
+                site_tag_id, algorithm, s_start, s_end, page_limit, algorithm)
             print('INFO:\n URL: ', url_handler, '\n Site Name: ', site_name,
             '\n Site Tag ID: ', site_tag_id, '\n Tag Name: \n')
 
