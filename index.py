@@ -1,6 +1,7 @@
 from encodings import search_function
 from hashlib import algorithms_available
 import json
+import this
 import requests
 import time
 import random
@@ -84,8 +85,7 @@ def login():
         login()
 
 
-def fetchSites(token):
-    print('Fetching Sites...')
+def fetch_sites(token):
     headers['Authorization'] = "Bearer " + token
 
     # Fetch datas and display
@@ -93,19 +93,19 @@ def fetchSites(token):
         response = requests.get(base_url + "/sites", headers=headers)
         if response.status_code == 200:
             sites = json.loads(response.text)['list']
-            start(sites)
+            start_up(sites)
             return
 
-        print('Unsuccessfully when fetching sites')
+        print('Failed to fetch sites')
         time.sleep(3)
-        fetchSites(token)
+        fetch_sites(token)
     except:
         print('Something went wrong')
         time.sleep(3)
-        fetchSites(token)
+        fetch_sites(token)
 
 
-def fetchCountries():
+def fetch_countries():
     headers['Authorization'] = "Bearer " + token
 
     # Fetch datas and display
@@ -122,11 +122,11 @@ def fetchCountries():
 
         print('Failed to fetch settings')
         time.sleep(3)
-        fetchCountries()
+        fetch_countries()
     except:
         print('Something went wrong')
         time.sleep(3)
-        fetchCountries()
+        fetch_countries()
 
 
 def login_vpn():
@@ -134,7 +134,7 @@ def login_vpn():
         windscribe.login('cubicsolutioninc2019', 'Cubic2@19')
         return True
     except Exception as e:
-        print(e)
+        # print(e)
         return False
 
 
@@ -144,33 +144,34 @@ def connect_vpn():
     result = os.popen('windscribe connect ' + country).read()
     arr = result.split(' ')
     ip = arr[-1]
-    print('VPN Connected IP: ' + ip + country)
+    location = arr[2] + ' ' + arr[3]
+    print('VPN Connected IP: ' + ip + location)
     return ip
 
 
-def sendLog(isUpdate = False, site_tag_id = None, status = None, page = None, s_startedAt = None, s_endedAT = None, ip = '', searchTerm = None):
+def send_log(is_update = False, site_tag_id = None, status = None, page = None, s_startedAt = None, s_endedAT = None, ip = '', searchTerm = None):
 
-    if isUpdate:
+    if is_update:
         payload = {'site_tag_id': site_tag_id, 'status': status, 'page': page, 'finished_at': s_endedAT}
 
         send_log = requests.patch(base_url + "/logs", headers=headers, json=payload)
 
-        print('Succesfully Updated!', send_log)
+        print('Succesfully Updated!')
         return
 
     payload = {'site_tag_id': site_tag_id, 'ip': ip, 'term': searchTerm, 'started_at': s_startedAt}
     send_log = requests.post(base_url + "/logs", headers=headers, json=payload)
 
-    print('Succesfully Saved!', send_log)
+    print('Succesfully Saved!')
 
 
-def checkModalElement():
+def check_modal_element():
     try:
         WebDriverWait(driver, 3).until(
             EC.presence_of_element_located((By.XPATH, "//div//button[@id='L2AGLb']")))
         return True
     except (TimeoutException, WebDriverException) as e:
-        print("No modal found -----> Processing...")
+        # print("No modal found -----> Processing...")
         return False
     
 
@@ -184,17 +185,16 @@ def close_modal():
 
 
 
-def generateDateTime():
+def generate_date_time():
     return time.strftime('%Y-%m-%d %H:%M:%S')
 
 
-def isFoundLink(site):
+def is_found_link(site):
         
-    urls = getUrls()
+    urls = get_urls()
     
-    print(list(filter(bool, map(lambda x: x.text, urls))))
+    # print(list(filter(bool, map(lambda x: x.text, urls))))
     print(site)
-    print('============================')
 
     for url in urls:
             result = re.search(site, url.text)
@@ -205,7 +205,7 @@ def isFoundLink(site):
     return False
 
 
-def getUrls():
+def get_urls():
 
     urls = []
     urls = driver.find_elements(By.XPATH, "//div//cite[@role='text']")
@@ -214,15 +214,14 @@ def getUrls():
     # return list(filter(bool, map(lambda x: x.text, urls)))
 
 
-def searchInBrowser(term, started_at):
-    print('Started at: ', started_at)
+def search_in_browser(term, started_at):
     search_query = "https://www.google.com/search?q={q}".format(q=term)
     driver.get(search_query)
-    if (checkModalElement()):
+    if (check_modal_element()):
         close_modal()
 
 
-def nextPage(start, end):
+def next_page(start, end):
     try:
         WebDriverWait(driver, 3).until(
             EC.presence_of_element_located((By.XPATH, "//tbody//tr//td//a[@id='pnnext']")))
@@ -241,14 +240,14 @@ def nextPage(start, end):
         return False
 
 
-def bootstrap(site, site_tag_id, _term, startTime, endTime, p_limit, algorithm = None):
+def boot_strap(site, site_tag_id, _term, startTime, endTime, p_limit, algorithm = None):
     term = _term.lower().strip()
 
-    started_at = generateDateTime()
+    started_at = generate_date_time()
     current_ip = connect_vpn()
-    print(sendLog(isUpdate=False, site_tag_id=site_tag_id, s_startedAt=started_at, ip=current_ip, searchTerm=algorithm))
+    print(send_log(is_update=False, site_tag_id=site_tag_id, s_startedAt=started_at, ip=current_ip, searchTerm=algorithm))
     ended_at = started_at
-    searchInBrowser(term, started_at)
+    search_in_browser(term, started_at)
 
     PAGE_LIMIT = p_limit
     status_result = 'failed'
@@ -256,23 +255,21 @@ def bootstrap(site, site_tag_id, _term, startTime, endTime, p_limit, algorithm =
     for i in range(PAGE_LIMIT):
         page_number = str(i + 1)
         print('Page number: ', page_number)
-        if (isFoundLink(site)):
+        if (is_found_link(site)):
             print("Found it! -----> Link has been clicked\n")
-            print('Ended at: ', ended_at)
-            print('\n\n')
             status_result = 'success'
-            print('success')
             time.sleep(5)
             break
 
-        if (not nextPage(startTime, endTime)):
+        if (not next_page(startTime, endTime)):
             break
 
-    ended_at = generateDateTime()
-    print(sendLog(isUpdate=True, site_tag_id=site_tag_id, status=status_result, page=page_number, s_endedAT=ended_at))
+    ended_at = generate_date_time()
+    print(send_log(is_update=True, site_tag_id=site_tag_id, status=status_result, page=page_number, s_endedAT=ended_at))
+    print('============================')
 
 
-def start(sites):
+def start_up(sites):
     for site in sites:
         id = site['id']
         site_name = site['name']
@@ -286,30 +283,26 @@ def start(sites):
     s_end = settings['end']
     page_limit = settings['page_limit']
 
-    print('Settings: \n', 'Start: ', s_start, '\nEnd: ',
-              s_end, '\nPage Limit: ', page_limit, '\n')
-
     # Get the tag names
     for tag_name in tag_names:
         tag_id = tag_name['id']
         site_tag_id = tag_name['site_tag_id']
 
         algorithms = [
+        tag_name['name'],
         tag_name['name'] + ' ' + site_name,
         site_name + ' ' + tag_name['name'],
         ]
 
         for algorithm in algorithms:
             
-            bootstrap(url_handler.replace("https://www.",""), 
+            boot_strap(url_handler.replace("https://www.",""), 
                 site_tag_id, algorithm, s_start, s_end, page_limit, algorithm)
-            print('INFO:\n URL: ', url_handler, '\n Site Name: ', site_name,
-            '\n Site Tag ID: ', site_tag_id, '\n Tag Name: \n')
             time.sleep(30)
 
 
-    print('Re-run ----->\n============================\n')
-    start(sites)
+    print('Re-run -----> ============================\n')
+    start_up(sites)
 
 
 # Connect to vpn before login
@@ -329,5 +322,5 @@ if status_code != 200:  # if fails, attempt again to relogin
     login()
 
 
-print('Logged in successfully \n')
-fetchSites(token)
+# print('Logged in successfully \n')
+fetch_sites(token)
