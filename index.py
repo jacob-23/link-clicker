@@ -1,7 +1,4 @@
-from encodings import search_function
-from hashlib import algorithms_available
 import json
-import this
 import requests
 import time
 import random
@@ -15,7 +12,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, WebDriverException
 import windscribe
-import socketio
 
 # mobile_emulation = {
 #     "deviceMetrics": { "width": 360, "height": 640, "pixelRatio": 3.0 },
