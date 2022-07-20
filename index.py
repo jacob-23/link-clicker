@@ -1,4 +1,5 @@
 import json
+import site
 import requests
 import time
 import random
@@ -12,6 +13,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, WebDriverException
 import windscribe
+import socketio
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # mobile_emulation = {
 #     "deviceMetrics": { "width": 360, "height": 640, "pixelRatio": 3.0 },
@@ -29,28 +34,14 @@ options.add_experimental_option("excludeSwitches", ["enable-automation"])
 
 
 # Install Chrome Webdrive
-driver = None
+# driver = None
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=options)
 
-base_url = "http://api-clicker.go-wi.com"
+# base_url = "http://api-clicker.go-wi.com"
 
-# print('IP Address:')
-# base_url = input()
 
-# print('Username:')
-# username = input()
-
-# print('Password:')
-# password = input()
-
-# sio = socketio.Client()
-# sio.connect('http://10.0.10.11:4002', namespaces=['/logs'])
-# print('Connection: ', sio)
-# @sio.on('connected', namespace='/logs')
-# def on_connected():
-#     sio.emit('insert-log', {'site_id': 64}, namespace='/logs')
-#     sio.disconnect()
-
+base_url = os.environ.get("BASE_URL")
+token = os.environ.get("TOKEN")
 
 params = {
     "username": "admin",
@@ -65,7 +56,8 @@ headers = {
 
 current_ip = ''
 searchTerm = ''
-
+countries = []
+country_id = None
 
 def login():
     try:
@@ -81,7 +73,7 @@ def login():
         login()
 
 
-def fetch_sites(token):
+def fetch_sites():
     headers['Authorization'] = "Bearer " + token
 
     # Fetch datas and display
@@ -94,11 +86,11 @@ def fetch_sites(token):
 
         print('Failed to fetch sites')
         time.sleep(3)
-        fetch_sites(token)
+        fetch_sites()
     except:
-        print('Something went wrong')
+        print('Something went wrong when fetching sites')
         time.sleep(3)
-        fetch_sites(token)
+        fetch_sites()
 
 
 def fetch_countries():
@@ -107,27 +99,23 @@ def fetch_countries():
     # Fetch datas and display
     try:
         response = requests.get(base_url + "/countries?filter_by=status&q=enabled", headers=headers)
-        if response.status_code == 200:
-            return json.loads(response.text)['list']
-            # for country in countries:
-            #     id = country['id']
-            #     country = site['country']
-            #     cca2 = site['cca2']
-            #     created_at = site['created_at']
-            # return cca2
+        list = json.loads(response.text)['list']
+        for country in list:
+            countries.append(country)
 
-        print('Failed to fetch settings')
-        time.sleep(3)
-        fetch_countries()
+        print("Countries has been successfully fetched.")
     except:
-        print('Something went wrong')
+        print('Something went wrong when fetching countries')
         time.sleep(3)
         fetch_countries()
 
 
 def login_vpn():
     try:
-        windscribe.login('cubicsolutioninc2019', 'Cubic2@19')
+        username = os.environ.get("WINDSCRIBE_USERNAME")
+        password = os.environ.get("WINDSCRIBE_PASSWORD")
+
+        windscribe.login(username, password)
         return True
     except Exception as e:
         # print(e)
@@ -135,17 +123,28 @@ def login_vpn():
 
 
 def connect_vpn():
-    countries = ["kr", "cn", "jp"]
+    os.system('windscribe disconnect')
+
     country = random.choice(countries)
-    result = os.popen('windscribe connect ' + country).read()
+    
+    result = os.popen('windscribe connect ' + country['code']).read()
+
     arr = result.split(' ')
     ip = arr[-1]
-    location = arr[2] + ' ' + arr[3]
-    print('VPN Connected IP: ' + ip + location)
-    return ip
+    filtered_characters = list(s for s in ip if s.isprintable())
+    filtered_ip = ''.join(filtered_characters)
+
+    is_not_valid = re.search('is not a valid location', result)
+    if is_not_valid or (filtered_ip == 'location'):
+        print(country['name'] + ' is not a valid location. Reconnecting other country...')
+        connect_vpn()
+
+    # location = arr[2] + ' ' + arr[3]
+    print('VPN Connected IP: ' + ip + ' ' + country['name'])
+    return ip, country['id']
 
 
-def send_log(is_update = False, site_tag_id = None, status = None, page = None, s_startedAt = None, s_endedAT = None, ip = '', searchTerm = None):
+def send_log(is_update = False, site_tag_id = None, status = None, page = None, s_startedAt = None, s_endedAT = None, ip = '', searchTerm = None, country_id = None):
 
     if is_update:
         payload = {'site_tag_id': site_tag_id, 'status': status, 'page': page, 'finished_at': s_endedAT}
@@ -155,7 +154,8 @@ def send_log(is_update = False, site_tag_id = None, status = None, page = None, 
         print('Succesfully Updated!')
         return
 
-    payload = {'site_tag_id': site_tag_id, 'ip': ip, 'term': searchTerm, 'started_at': s_startedAt}
+    payload = {'site_tag_id': site_tag_id, 'country_id': country_id, 'ip': ip, 'term': searchTerm, 'started_at': s_startedAt}
+    print(payload)
     send_log = requests.post(base_url + "/logs", headers=headers, json=payload)
 
     print('Succesfully Saved!')
@@ -240,8 +240,9 @@ def boot_strap(site, site_tag_id, _term, startTime, endTime, p_limit, algorithm 
     term = _term.lower().strip()
 
     started_at = generate_date_time()
-    current_ip = connect_vpn()
-    print(send_log(is_update=False, site_tag_id=site_tag_id, s_startedAt=started_at, ip=current_ip, searchTerm=algorithm))
+    current_ip, country_id = connect_vpn()
+
+    print(send_log(is_update=False, site_tag_id=site_tag_id, s_startedAt=started_at, ip=current_ip, searchTerm=algorithm, country_id=country_id))
     ended_at = started_at
     search_in_browser(term, started_at)
 
@@ -301,22 +302,30 @@ def start_up(sites):
     start_up(sites)
 
 
+# Activate this when using live
 # Connect to vpn before login
 is_logged_in = login_vpn()
 if not is_logged_in:
     time.sleep(3)
     login_vpn()
 
-current_ip = connect_vpn()
 
-# Attempt Login
-token, status_code = login()
+fetch_countries()
 
-# Check status code login
-if status_code != 200:  # if fails, attempt again to relogin
-    time.sleep(3)
-    login()
+# For Local
+# current_ip = '192.168.142.128'
+
+# Active this when using Live
+current_ip, country_id = connect_vpn()
+
+# # Attempt Login
+# token, status_code = login()
+
+# # Check status code login
+# if status_code != 200:  # if fails, attempt again to relogin
+#     time.sleep(3)
+#     login()
 
 
 # print('Logged in successfully \n')
-fetch_sites(token)
+fetch_sites()

@@ -1,0 +1,22 @@
+# To install Google Chrome from the terminal
+# 	wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+
+
+# 	-->use dpkg to install Chrome from the downloaded DEB file
+# 		sudo dpkg -i google-chrome-stable_current_amd64.deb
+
+
+# Open your Terminal and add the windscribe signing key to apt using following command.
+# 	sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key FDC247B7
+
+
+# Add the repository to your source.list using following command
+# 	echo 'deb https://repo.windscribe.com/ubuntu bionic main' | sudo tee /etc/apt/sources.list.d/windscribe-repo.list
+
+
+# Install windscribe-cli using following command.
+# 	sudo apt-get install windscribe-cli
+
+
+# Update your system packages
+# 	sudo apt-get update
