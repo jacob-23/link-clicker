@@ -155,7 +155,7 @@ def send_log(is_update = False, site_tag_id = None, status = None, page = None, 
         return
 
     payload = {'site_tag_id': site_tag_id, 'country_id': country_id, 'ip': ip, 'term': searchTerm, 'started_at': s_startedAt}
-    print(payload)
+
     send_log = requests.post(base_url + "/logs", headers=headers, json=payload)
 
     print('Succesfully Saved!')
