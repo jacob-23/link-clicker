@@ -28,7 +28,7 @@ options.add_argument("start-maximized")
 options.add_argument("--disable-infobars")
 options.add_argument("--disable-extensions")
 options.add_experimental_option("excludeSwitches", ["enable-automation"])
-# options.headless = True
+options.headless = True
 # options.add_experimental_option("mobileEmulation", mobile_emulation)
 
 
