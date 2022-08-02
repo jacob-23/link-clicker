@@ -1,5 +1,6 @@
 import json
 import site
+from urllib import response
 import requests
 import time
 import random
@@ -144,21 +145,25 @@ def connect_vpn():
     return ip, country['id']
 
 
-def send_log(is_update = False, site_tag_id = None, status = None, page = None, s_startedAt = None, s_endedAT = None, ip = '', searchTerm = None, country_id = None):
+def send_log(is_update = False, site_tag_id = None, status = None, page = None, s_startedAt = None, s_endedAT = None, ip = '', searchTerm = None, country_id = None, log_id = None):
 
     if is_update:
-        payload = {'site_tag_id': site_tag_id, 'status': status, 'page': page, 'finished_at': s_endedAT}
-
-        send_log = requests.patch(base_url + "/logs", headers=headers, json=payload)
+        payload = {'status': status, 'page': page, 'finished_at': s_endedAT}
+        requests.patch(base_url + "/logs/" + str(log_id), headers=headers, json=payload)
 
         print('Succesfully Updated!')
         return
 
-    payload = {'site_tag_id': site_tag_id, 'country_id': country_id, 'ip': ip, 'term': searchTerm, 'started_at': s_startedAt}
+
+    pc_name = os.environ.get("PC_NAME")
+    payload = {'pc_name': pc_name, 'site_tag_id': site_tag_id, 'country_id': country_id, 'ip': ip, 'term': searchTerm, 'started_at': s_startedAt}
 
     send_log = requests.post(base_url + "/logs", headers=headers, json=payload)
 
     print('Succesfully Saved!')
+    
+    return json.loads(send_log.text)['id']
+
 
 
 def check_modal_element():
@@ -242,7 +247,7 @@ def boot_strap(site, site_tag_id, _term, startTime, endTime, p_limit, algorithm 
     started_at = generate_date_time()
     current_ip, country_id = connect_vpn()
 
-    print(send_log(is_update=False, site_tag_id=site_tag_id, s_startedAt=started_at, ip=current_ip, searchTerm=algorithm, country_id=country_id))
+    log_id = send_log(is_update=False, site_tag_id=site_tag_id, s_startedAt=started_at, ip=current_ip, searchTerm=algorithm, country_id=country_id)
     ended_at = started_at
     search_in_browser(term, started_at)
 
@@ -262,7 +267,7 @@ def boot_strap(site, site_tag_id, _term, startTime, endTime, p_limit, algorithm 
             break
 
     ended_at = generate_date_time()
-    print(send_log(is_update=True, site_tag_id=site_tag_id, status=status_result, page=page_number, s_endedAT=ended_at))
+    print(send_log(is_update=True, site_tag_id=site_tag_id, status=status_result, page=page_number, s_endedAT=ended_at, log_id=log_id))
     print('============================')
 
 
